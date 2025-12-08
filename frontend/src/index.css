@@ -1,0 +1,241 @@
+/* App Container */
+.app-container {
+  min-height: 100vh;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+.app-wrapper {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  background: #2563EB;
+  padding: 25px 20px;
+  text-align: center;
+  color: white;
+}
+
+.title {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: bold;
+  margin: 12px 0 6px 0;
+}
+
+.subtitle {
+  font-size: clamp(13px, 2.5vw, 15px);
+  opacity: 0.95;
+  margin: 0;
+  padding: 0 10px;
+}
+
+/* Icons */
+.icon-upload {
+  width: 100%;
+  height: 100%;
+  max-width: 100px;
+  max-height: 100px;
+  margin: 0 auto 15px;
+}
+
+.icon-file {
+  width: 100%;
+  height: 100%;
+  max-width: 60px;
+  max-height: 60px;
+  margin: 0 auto;
+}
+
+.icon-check {
+  width: 100%;
+  height: 100%;
+  max-width: 70px;
+  max-height: 70px;
+  margin: 0 auto;
+}
+
+/* Content */
+.content {
+  padding: clamp(15px, 4vw, 30px);
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-size: clamp(12px, 2.5vw, 13px);
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+/* Upload Area */
+.upload-area {
+  border: 3px dashed #D1D5DB;
+  border-radius: 12px;
+  padding: clamp(20px, 4vw, 30px);
+  text-align: center;
+  background: #F9FAFB;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.upload-area.dragging {
+  border-color: #2563EB;
+  background: #EFF6FF;
+}
+
+.upload-area.has-file {
+  border-color: #10B981;
+  background: #ECFDF5;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-label {
+  cursor: pointer;
+  display: block;
+}
+
+/* File Info */
+.file-info {
+  margin-top: 15px;
+}
+
+.file-name {
+  font-size: clamp(15px, 3vw, 18px);
+  font-weight: 600;
+  color: #059669;
+  margin: 0 0 8px 0;
+  word-break: break-word;
+  padding: 0 10px;
+}
+
+.file-size {
+  font-size: clamp(12px, 2.5vw, 14px);
+  color: #10B981;
+  margin: 0 0 15px 0;
+}
+
+.change-file-btn {
+  background: none;
+  border: none;
+  color: #2563EB;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: clamp(12px, 2.5vw, 14px);
+  padding: 5px;
+}
+
+.change-file-btn:hover {
+  color: #1D4ED8;
+}
+
+/* Upload Text */
+.upload-text {
+  font-size: clamp(15px, 3vw, 18px);
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+  padding: 0 10px;
+}
+
+.upload-subtext {
+  font-size: clamp(12px, 2.5vw, 14px);
+  color: #6B7280;
+  margin: 0;
+}
+
+/* Select Input */
+.select-input {
+  width: 100%;
+  padding: clamp(10px, 2.5vw, 12px) 14px;
+  border: 2px solid #D1D5DB;
+  border-radius: 10px;
+  font-size: clamp(13px, 3vw, 15px);
+  outline: none;
+  background: white;
+  cursor: pointer;
+}
+
+.select-input:focus {
+  border-color: #2563EB;
+}
+
+/* Upload Button */
+.upload-btn {
+  width: 100%;
+  background: #2563EB;
+  color: white;
+  font-weight: 600;
+  font-size: clamp(13px, 3vw, 15px);
+  padding: clamp(12px, 3vw, 14px);
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.upload-btn:hover {
+  background: #1D4ED8;
+}
+
+.upload-btn.disabled {
+  background: #D1D5DB;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Response Section */
+.response-section {
+  margin-top: 20px;
+}
+
+.response-title {
+  font-size: clamp(12px, 2.5vw, 13px);
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.response-content {
+  background: #1F2937;
+  color: #10B981;
+  padding: clamp(15px, 3vw, 20px);
+  border-radius: 12px;
+  overflow-x: auto;
+  font-size: clamp(11px, 2.5vw, 14px);
+  font-family: monospace;
+  margin: 0;
+  max-width: 100%;
+}
+
+/* Footer */
+.footer-text {
+  text-align: center;
+  color: #6B7280;
+  font-size: clamp(12px, 2.5vw, 14px);
+  margin-top: 20px;
+  padding: 0 10px;
+}
