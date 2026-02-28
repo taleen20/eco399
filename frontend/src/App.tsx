@@ -1,39 +1,72 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import "./App.css";
+
+type JobState = 'pending' | 'started' | 'progress' | 'success' | 'failure' | '';
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [language, setLanguage] = useState("en");
-  const [response, setResponse] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [jobId, setJobId] = useState("");
+  const [jobState, setJobState] = useState<JobState>("");
+  const [jobStep, setJobStep] = useState("");
+  const [downloadFilename, setDownloadFilename] = useState("");
+  const [tablesFound, setTablesFound] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!jobId) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await axios.get(`/api/status/${jobId}`);
+        const { state, step, filename, tables_found, error } = res.data;
+        setJobState(state);
+        setJobStep(step ?? "");
+
+        if (state === 'success') {
+          setDownloadFilename(filename);
+          setTablesFound(tables_found);
+          clearInterval(pollRef.current!);
+        } else if (state === 'failure') {
+          setErrorMessage(error || "Processing failed.");
+          clearInterval(pollRef.current!);
+        }
+      } catch {
+        setErrorMessage("Lost connection while polling for status.");
+        clearInterval(pollRef.current!);
+      }
+    }, 2000);
+
+    return () => clearInterval(pollRef.current!);
+  }, [jobId]);
 
   const handleUpload = async () => {
-    if (!file) {
-      alert("Please select a PDF file first.");
-      return;
-    }
+    if (!file) return;
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("language", language);
 
+    setIsUploading(true);
+    setJobId("");
+    setJobState("");
+    setJobStep("");
+    setDownloadFilename("");
+    setTablesFound(null);
+    setErrorMessage("");
+
     try {
-      // Simulated response for demo
-      setResponse(JSON.stringify({ 
-        success: true, 
-        filename: file.name,
-        rows: 150,
-        message: "File processed successfully" 
-      }, null, 2));
-      
-      // Real API call:
-      // const res = await axios.post("http://127.0.0.1:5000/upload", formData, {
-      //   headers: { "Content-Type": "multipart/form-data" },
-      // });
-      // setResponse(JSON.stringify(res.data, null, 2));
+      const res = await axios.post("/api/upload", formData);
+      setJobId(res.data.job_id);
+      setJobState("pending");
     } catch (err: any) {
-      console.error(err);
-      alert("Upload failed.");
+      setErrorMessage(err.response?.data?.error || "Upload failed.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -42,25 +75,36 @@ function App() {
     setIsDragging(true);
   };
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
+  const handleDragLeave = () => setIsDragging(false);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === "application/pdf") {
-      setFile(droppedFile);
-    }
+    if (droppedFile?.type === "application/pdf") setFile(droppedFile);
   };
 
-  // SVG Icons
+  const isProcessing = isUploading || (!!jobId && jobState !== 'success' && jobState !== 'failure');
+
+  const buttonLabel = isUploading
+    ? "Uploading..."
+    : isProcessing
+    ? "Processing..."
+    : "Upload and Convert";
+
+  const stepLabel: Record<string, string> = {
+    pending: "Queued",
+    started: "Starting",
+    progress: jobStep,
+    success: `Done — ${tablesFound} table(s) found`,
+    failure: errorMessage,
+  };
+
   const UploadIcon = () => (
     <svg className="icon-upload" viewBox="0 0 120 120" fill="none">
-      <path d="M60 15C35.1472 15 15 35.1472 15 60C15 84.8528 35.1472 105 60 105C84.8528 105 105 84.8528 105 60C105 35.1472 84.8528 15 60 15Z" 
+      <path d="M60 15C35.1472 15 15 35.1472 15 60C15 84.8528 35.1472 105 60 105C84.8528 105 105 84.8528 105 60C105 35.1472 84.8528 15 60 15Z"
             fill="#E8F1FF" stroke="#2563EB" strokeWidth="4"/>
-      <path d="M60 75V45M60 45L47.5 57.5M60 45L72.5 57.5" 
+      <path d="M60 75V45M60 45L47.5 57.5M60 45L72.5 57.5"
             stroke="#2563EB" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
@@ -77,8 +121,7 @@ function App() {
       <div className="app-wrapper">
         <div className="card">
           <div className="header">
-            <h1 className="title">PDF to CSV Uploader</h1>
-            <p className="subtitle">Convert your PDF documents to CSV format</p>
+            <h1 className="title">ECO399: Price of Empire</h1>
           </div>
 
           <div className="content">
@@ -107,10 +150,7 @@ function App() {
                         <button
                           type="button"
                           className="change-file-btn"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setFile(null);
-                          }}
+                          onClick={(e) => { e.preventDefault(); setFile(null); }}
                         >
                           Choose different file
                         </button>
@@ -142,17 +182,26 @@ function App() {
 
             <button
               onClick={handleUpload}
-              disabled={!file}
-              className={`upload-btn ${!file ? 'disabled' : ''}`}
+              disabled={!file || isProcessing}
+              className={`upload-btn ${!file || isProcessing ? 'disabled' : ''}`}
             >
-              Upload and Convert
+              {buttonLabel}
             </button>
 
-            {response && (
-              <div className="response-section">
-                <h3 className="response-title">Response</h3>
-                <pre className="response-content">{response}</pre>
-              </div>
+            {jobState && (
+              <p className={`job-status ${jobState}`}>
+                {stepLabel[jobState] ?? jobState}
+              </p>
+            )}
+
+            {downloadFilename && (
+              <a
+                href={`/api/download/${downloadFilename}`}
+                download={downloadFilename}
+                className="download-link"
+              >
+                Download {downloadFilename}
+              </a>
             )}
           </div>
         </div>

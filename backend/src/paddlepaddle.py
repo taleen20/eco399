@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 import io
 import gc
-import fitz
+import pymupdf as fitz
 import cv2
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter
@@ -18,9 +18,12 @@ import shutil
 app = Flask(__name__)
 CORS(app)
 
-# Configuration
-UPLOAD_FOLDER = 'uploads'
-OUTPUT_FOLDER = 'outputs'
+# Configuration — absolute paths so Flask and the Celery worker agree
+# regardless of which directory each process was started from.
+_SRC_DIR = os.path.dirname(os.path.abspath(__file__))
+_BACKEND_DIR = os.path.dirname(_SRC_DIR)
+UPLOAD_FOLDER = os.path.join(_BACKEND_DIR, 'uploads')
+OUTPUT_FOLDER = os.path.join(_BACKEND_DIR, 'outputs')
 ALLOWED_EXTENSIONS = {'pdf'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
@@ -168,7 +171,3 @@ def ocr_to_csv(ocr_results: List) -> str:
             csv_lines.append(','.join(f'"{cell}"' for cell in current_row))
     
     return '\n'.join(csv_lines)
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)

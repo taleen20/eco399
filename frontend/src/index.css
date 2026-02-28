@@ -207,6 +207,47 @@
   box-shadow: none;
 }
 
+.download-link {
+  display: block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #10B981;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.download-link:hover {
+  background: #059669;
+}
+
+.job-status {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.job-status.pending,
+.job-status.started,
+.job-status.progress {
+  color: #1D4ED8;
+  background: #EFF6FF;
+}
+
+.job-status.success {
+  color: #059669;
+  background: #ECFDF5;
+}
+
+.job-status.failure {
+  color: #DC2626;
+  background: #FEF2F2;
+}
+
 /* Response Section */
 .response-section {
   margin-top: 20px;
