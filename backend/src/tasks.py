@@ -4,7 +4,7 @@ import tempfile
 
 from celery_app import celery
 from paddlepaddle import (
-    ocr, pdf_to_images, preprocess_image_for_ocr,
+    ocr_models, pdf_to_images, preprocess_image_for_ocr,
     detect_and_crop_tables, ocr_to_csv, OUTPUT_FOLDER,
 )
 
@@ -28,6 +28,7 @@ def process_pdf(self, pdf_path: str, language: str) -> dict:
             state='PROGRESS',
             meta={'step': f'Running OCR on {len(all_table_crops)} table(s)'}
         )
+        ocr = ocr_models.get(language, ocr_models['en'])
         temp_dir = tempfile.mkdtemp()
         all_ocr_results = []
         for crop in all_table_crops:

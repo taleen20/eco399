@@ -16,11 +16,23 @@ function App() {
   const [tablesFound, setTablesFound] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
+  const MAX_POLLS = 150; // 5 minutes at 2s intervals
 
   useEffect(() => {
     if (!jobId) return;
 
+    pollCountRef.current = 0;
+
     pollRef.current = setInterval(async () => {
+      pollCountRef.current += 1;
+
+      if (pollCountRef.current > MAX_POLLS) {
+        setErrorMessage("Processing timed out. The job may still be running — try refreshing.");
+        clearInterval(pollRef.current!);
+        return;
+      }
+
       try {
         const res = await axios.get(`/api/status/${jobId}`);
         const { state, step, filename, tables_found, error } = res.data;

@@ -60,9 +60,11 @@ def get_status(job_id):
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     file_path = os.path.join(OUTPUT_FOLDER, filename)
-    if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
-    return jsonify({'error': 'File not found'}), 404
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+    response = send_file(file_path, as_attachment=True)
+    os.remove(file_path)
+    return response
 
 
 @app.route('/health', methods=['GET'])

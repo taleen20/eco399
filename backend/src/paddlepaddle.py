@@ -34,8 +34,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
 # Initialize models (load once at startup)
-print("Loading OCR model...")
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
+print("Loading OCR models...")
+ocr_models = {
+    'en': PaddleOCR(use_angle_cls=True, lang='en'),
+    'es': PaddleOCR(use_angle_cls=True, lang='es'),
+}
 print("Loading table detection model...")
 table_detector = pipeline("object-detection", model="TahaDouaji/detr-doc-table-detection")
 print("Models loaded successfully!")
