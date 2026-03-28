@@ -24,6 +24,11 @@ gunicorn = "^23.0.0"
 
 [tool.poetry.group.dev.dependencies]
 locust = "^2.43.3"
+pytest = "^8.0.0"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
