@@ -14,37 +14,54 @@ function App() {
   const [jobStep, setJobStep] = useState("");
   const [downloadFilename, setDownloadFilename] = useState("");
   const [tablesFound, setTablesFound] = useState<number | null>(null);
+  const [ocrFailed, setOcrFailed] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
   const MAX_POLLS = 150; // 5 minutes at 2s intervals
 
+  const notify = (title: string, body: string) => {
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body });
+    }
+  };
+
   useEffect(() => {
     if (!jobId) return;
 
     pollCountRef.current = 0;
+    Notification.requestPermission();
 
     pollRef.current = setInterval(async () => {
       pollCountRef.current += 1;
 
       if (pollCountRef.current > MAX_POLLS) {
         setErrorMessage("Processing timed out. The job may still be running — try refreshing.");
+        document.title = "⚠ Timed out — Price of Empire";
         clearInterval(pollRef.current!);
         return;
       }
 
       try {
         const res = await axios.get(`/api/status/${jobId}`);
-        const { state, step, filename, tables_found, error } = res.data;
+        const { state, step, filename, tables_found, ocr_failed, error } = res.data;
         setJobState(state);
         setJobStep(step ?? "");
 
         if (state === 'success') {
           setDownloadFilename(filename);
           setTablesFound(tables_found);
+          setOcrFailed(ocr_failed ?? 0);
+          document.title = "✓ Done — Price of Empire";
+          notify("Conversion complete", tables_found === 0
+            ? "No tables were detected in the PDF."
+            : `${tables_found} table(s) extracted. Your CSV is ready to download.`
+          );
           clearInterval(pollRef.current!);
         } else if (state === 'failure') {
           setErrorMessage(error || "Processing failed.");
+          document.title = "⚠ Failed — Price of Empire";
+          notify("Conversion failed", error || "Processing failed.");
           clearInterval(pollRef.current!);
         }
       } catch {
@@ -56,8 +73,17 @@ function App() {
     return () => clearInterval(pollRef.current!);
   }, [jobId]);
 
+  useEffect(() => {
+    return () => { document.title = "Price of Empire"; };
+  }, []);
+
   const handleUpload = async () => {
     if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      setErrorMessage("File exceeds the 50MB limit.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
@@ -69,6 +95,7 @@ function App() {
     setJobStep("");
     setDownloadFilename("");
     setTablesFound(null);
+    setOcrFailed(0);
     setErrorMessage("");
 
     try {
@@ -206,7 +233,17 @@ function App() {
               </p>
             )}
 
-            {downloadFilename && (
+            {jobState === 'success' && tablesFound === 0 && (
+              <p className="job-status failure">No tables were detected in this PDF.</p>
+            )}
+
+            {jobState === 'success' && ocrFailed > 0 && (
+              <p className="job-status failure">
+                {ocrFailed} table(s) were detected but could not be read by OCR and are missing from the CSV.
+              </p>
+            )}
+
+            {downloadFilename && tablesFound !== null && tablesFound > 0 && (
               <a
                 href={`/api/download/${downloadFilename}`}
                 download={downloadFilename}

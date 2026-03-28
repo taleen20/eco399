@@ -31,12 +31,15 @@ def process_pdf(self, pdf_path: str, language: str) -> dict:
         ocr = ocr_models.get(language, ocr_models['en'])
         temp_dir = tempfile.mkdtemp()
         all_ocr_results = []
+        ocr_failed = 0
         for crop in all_table_crops:
             temp_img_path = os.path.join(temp_dir, 'temp_table.png')
             crop.save(temp_img_path)
             result = ocr.ocr(temp_img_path, cls=True)
             if result and result[0]:
                 all_ocr_results.append(result[0])
+            else:
+                ocr_failed += 1
 
         self.update_state(state='PROGRESS', meta={'step': 'Saving CSV'})
         csv_content = ocr_to_csv(all_ocr_results)
@@ -47,12 +50,12 @@ def process_pdf(self, pdf_path: str, language: str) -> dict:
         with open(csv_path, 'w', encoding='utf-8') as f:
             f.write(csv_content)
 
-        os.remove(pdf_path)
-
-        return {'filename': csv_filename, 'tables_found': len(all_table_crops)}
+        return {'filename': csv_filename, 'tables_found': len(all_table_crops), 'ocr_failed': ocr_failed}
 
     except Exception:
         raise
     finally:
         if temp_dir:
             shutil.rmtree(temp_dir, ignore_errors=True)
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)

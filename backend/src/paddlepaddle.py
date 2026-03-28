@@ -114,52 +114,56 @@ def detect_and_crop_tables(image: Image.Image, score_thresh: float = 0.5, pad: i
     """Detect tables and crop them from image"""
     w, h = image.size
     preds = table_detector(images=image)
-    
+
     table_preds = [
         p for p in preds
-        if p.get("label", "").lower() == "table" and p.get("score", 0) >= score_thresh
+        if p.get("label", "").lower() in ("table", "table rotated")
+        and p.get("score", 0) >= score_thresh
     ]
-    
+
     crops = []
     for p in table_preds:
         xmin = max(0, int(p["box"]["xmin"]) - pad)
         ymin = max(0, int(p["box"]["ymin"]) - pad)
         xmax = min(w, int(p["box"]["xmax"]) + pad)
         ymax = min(h, int(p["box"]["ymax"]) + pad)
-        crops.append(image.crop((xmin, ymin, xmax, ymax)))
-    
+        crop = image.crop((xmin, ymin, xmax, ymax))
+        if p.get("label", "").lower() == "table rotated":
+            crop = crop.rotate(90, expand=True)
+        crops.append(crop)
+
     return crops
 
 
 def ocr_to_csv(ocr_results: List) -> str:
     """Convert OCR results to CSV format"""
-    csv_lines = []
-    
-    for page_idx, page_result in enumerate(ocr_results):
+    table_blocks = []
+
+    for page_result in ocr_results:
         if not page_result:
             continue
-            
+
         # Group text by rows based on y-coordinates
         texts_with_coords = []
         for line in page_result:
             if len(line) >= 2:
                 bbox = line[0]  # [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
                 text = line[1][0] if isinstance(line[1], tuple) else line[1]
-                
-                # Get average y-coordinate for row grouping
+
                 y_avg = sum(point[1] for point in bbox) / 4
                 x_avg = sum(point[0] for point in bbox) / 4
-                
+
                 texts_with_coords.append((y_avg, x_avg, text))
-        
+
         # Sort by y then x
         texts_with_coords.sort(key=lambda t: (round(t[0] / 20), t[1]))
-        
+
         # Group into rows
+        csv_lines = []
         current_row = []
         current_y = None
         y_threshold = 20
-        
+
         for y, x, text in texts_with_coords:
             if current_y is None or abs(y - current_y) < y_threshold:
                 current_row.append(text)
@@ -169,8 +173,12 @@ def ocr_to_csv(ocr_results: List) -> str:
                     csv_lines.append(','.join(f'"{cell}"' for cell in current_row))
                 current_row = [text]
                 current_y = y
-        
+
         if current_row:
             csv_lines.append(','.join(f'"{cell}"' for cell in current_row))
-    
-    return '\n'.join(csv_lines)
+
+        if csv_lines:
+            table_blocks.append('\n'.join(csv_lines))
+
+    # Separate each table with a blank line
+    return '\n\n'.join(table_blocks)
